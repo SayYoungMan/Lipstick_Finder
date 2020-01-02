@@ -46,6 +46,7 @@ def find_lips(image, shape):
     return upperlip_img, lowerlip_img
 
 def get_colors(image, no_color):
+    image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
     modified_image = image.reshape(image.shape[0]*image.shape[1], 3)
     clf = KMeans(n_clusters = no_color)
     labels = clf.fit_predict(modified_image)
@@ -57,11 +58,12 @@ def get_colors(image, no_color):
     hex_colors = [rgb2hex(ordered_colors[i]) for i in counts.keys()]
     #rgb_colors = [ordered_colors[i] for i in counts.keys()]
 
-    try:
+    if '#ffffff' in hex_colors:
         counts.pop(hex_colors.index('#ffffff'))
         hex_colors.remove('#ffffff')
-    except ValueError:
-        pass
+    elif '#fefeff' in hex_colors:
+        counts.pop(hex_colors.index('#fefeff'))
+        hex_colors.remove('#fefeff')
     
     return hex_colors, counts
 
@@ -107,13 +109,12 @@ for (i, rect) in enumerate(rects):
     upperlip_img, lowerlip_img = find_lips(image, shape)
     upperlip_color, upperlip_counts = get_colors(upperlip_img, 8)
     lowerlip_color, lowerlip_counts = get_colors(lowerlip_img, 8)
-    print(upperlip_color)
-    print(upperlip_counts)
+    upperlip_analysis = dict(zip(upperlip_color, upperlip_counts.values()))
+    lowerlip_analysis = dict(zip(lowerlip_color, lowerlip_counts.values()))
+    lip_analysis = dict(Counter(upperlip_analysis) + Counter(lowerlip_analysis))
     plt.figure(figsize = (8, 6))
-    plt.pie(upperlip_counts.values(), labels = upperlip_color, colors = upperlip_color)
+    plt.pie(lip_analysis.values(), labels = lip_analysis.keys(), colors = lip_analysis.keys())
     plt.show()
-    cv2.imshow("output",upperlip_img)
-    cv2.waitKey(0)
 
 # show the output image with the face detections + facial landmarks
 #cv2.imshow("Output", image)
